@@ -12,7 +12,7 @@ sleep 2s &&
 if [ -f key.key ]; then
 	for DISKS in $(cat /etc/cryptdevice); do
 		for DISK in $(ls /dev | grep $DISKS); do
-			cryptsetup -c aes -f key.key create $DISK /dev/$DISK &&
+			cryptsetup -c aes -d key.key create $DISK /dev/$DISK &&
 			echo $DISK >> /tmp/cryptdevs
 		done
 	done
