@@ -5,15 +5,17 @@
 #* it under the terms of the artistic license as published in the top source dir of the
 #* package
 #************************************************************************/
+#!/bin/bash 
 MOUNT_BASE="/tmp/removable"
 PWD=/
 OLDPWD=/
-echo $DEVPATH
+#wall $DEVPATH
 
 
+DEVNAME=$(echo $DEVPATH | sed "s:^/.*/:/dev/:")
 
 if [ "$ACTION" == "add" ]; then 
-	if [ -d /sys/$DEVPATH/../ ] && 
+	if [ -d /sys/$DEVPATH/ ] && 
 		 [ -f /sys/$DEVPATH/../removable ] &&
  		 [ "1" == "$(cat /sys/$DEVPATH/../removable)" ]; then
 		for DISK in  $(echo $DEVPATH |sed "s:^.*/::")
@@ -23,11 +25,16 @@ if [ "$ACTION" == "add" ]; then
 			if [ -x $MOUNT_BASE-$DISK/cryptsetup ] &&
 					! test -f /tmp/cryptkey; 
 			then
-					#echo "running $MOUNT_BASE-$DISK/cryptsetup" > /dev/tty9
+					echo "running $MOUNT_BASE-$DISK/cryptsetup" |
+											logger -p daemon.notice -t [udev-autocrypt]
 					cd $MOUNT_BASE-$DISK/
-					$MOUNT_BASE-$DISK/cryptsetup
+					$MOUNT_BASE-$DISK/cryptsetup 2>&- 2>&1|
+											logger -p daemon.notice -t [udev-autocrypt]
 					echo $DEVNAME > /tmp/cryptkey
 					chmod go-rwx /tmp/cryptkey
+				else
+						echo "no cryptsetup or /tmp/cryptkey exist" |
+											logger -p daemon.notice -t [udev-autocrypt]
 			fi
 			cd /
 			while ! umount $MOUNT_BASE-$DISK ; do
